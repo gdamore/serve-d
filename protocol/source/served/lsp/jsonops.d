@@ -19,18 +19,34 @@ deprecated("use deserializeJson") T fromJSON(T)(StdJSONValue value)
 /++
 JSON serialization function.
 +/
-string serializeJson(T)(auto ref T value)
+string serializeJsonImpl(T)(auto ref T value)
 {
 	import mir.ser.json : serializeJson;
 
 	return serializeJson!T(value);
 }
 
-T deserializeJson(T)(scope const(char)[] text)
+string serializeJson(T)(auto ref T value)
+{
+	static if (__traits(hasMember, T, "toJson"))
+		return T.toJson(value);
+	else
+		return serializeJsonImpl(value);
+}
+
+T deserializeJsonImpl(T)(scope const(char)[] text)
 {
 	import mir.deser.json : deserializeJson;
 
 	return deserializeJson!T(text);
+}
+
+T deserializeJson(T)(scope const(char)[] text)
+{
+	static if (__traits(hasMember, T, "fromJson"))
+		return T.fromJson(text);
+	else
+		return deserializeJsonImpl!T(text);
 }
 
 unittest
